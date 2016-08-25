@@ -123,7 +123,7 @@ f_CXCL17 <- factor(CXCL17 > median(CXCL17),
                    levels = c('FALSE', 'TRUE'),
                    labels = c('Low', 'High'))
 LUAD_clinical$CXCL17 <- f_CXCL17
-fit <- survfit(Surv(Time, Status=="Dead") ~ CXCL17, 
+fit <- survfit(Surv(Time/30.4, Status=="Dead") ~ CXCL17, 
                data=subset(LUAD_clinical, Stage != "Stage IV")) 
 plot(fit, lty=2:3, xlab="CXCL17", ylab="Survival") 
 legend("topright", legend=c('Low', 'High'), lty = c(2,3))
