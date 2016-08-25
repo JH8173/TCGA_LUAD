@@ -118,14 +118,20 @@ Gender로 kaplan meier graph 그리기
 
 install.packages("survival", repos="http://cran.r-project.org" )
 require(survival)
-fit <- survfit(Surv(Time, Status=="Dead") ~ Gender, data=LUAD_clinical) 
-plot(fit, lty=2:3, xlab="Gender", ylab="Survival") 
-legend("topright", legend=levels(LUAD_clinical$Gender), lty=1:2)
+
+f_CXCL17 <- factor(CXCL17 > median(CXCL17),
+                   levels = c('FALSE', 'TRUE'),
+                   labels = c('Low', 'High'))
+LUAD_clinical$CXCL17 <- f_CXCL17
+fit <- survfit(Surv(Time, Status=="Dead") ~ CXCL17, 
+               data=subset(LUAD_clinical, Stage != "Stage IV")) 
+plot(fit, lty=2:3, xlab="CXCL17", ylab="Survival") 
+legend("topright", legend=c('Low', 'High'), lty = c(2,3))
 
 #############
-Log-rank test 
+#Log-rank test 
 #############
-survdiff(Surv(time,status==1)~***, data=LUAD_clinical)
+survdiff(Surv(Time,Status=="Dead")~f_CXCL17, data=LUAD_clinical)
 
 ######################
 # Correlation analysis. #
@@ -153,3 +159,5 @@ rownames(LUSC_rnaseq)[coeffi_cor_SC > 0.6]
 rownames(LUSC_rnaseq)
 coeffi_cor_SC > 0.6
 rownames(LUSC_rnaseq)[coeffi_cor_SC > 0.3]
+
+sum(names(CXCL17) == LUAD_clinical$Barcode)
