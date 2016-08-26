@@ -38,8 +38,7 @@ LUAD_clinical <- read_clinical("nationwidechildrens.org_clinical_patient_luad.tx
 LUSC_clinical <- read_clinical("nationwidechildrens.org_clinical_patient_lusc.txt")
 View(LUAD_clinical)
 View(LUSC_clinical)
-LUAD_clinical[1:10, 1:10]
-LUAD_clinical[1:10,]
+
 
 ####################
 # Read RNASeq data #
@@ -52,7 +51,6 @@ read_rnaseq <- function(rnaseq_file="LUAD_rnaseq"){
 }
 LUAD_rnaseq <- read_rnaseq("LUAD_rnaseq")
 LUAD_rnaseq <- read_rnaseq("./LUAD_rnaseq/LUAD_rnaseq")
-LUAD_rnaseq[1:10, 1:10]
 LUSC_rnaseq <- read_rnaseq("./LUSC_rnaseq")
 LUSC_rnaseq <- read_rnaseq("./LUAD_rnaseq/LUSC_rnaseq")
 View(LUSC_rnaseq)
@@ -113,25 +111,54 @@ LUSC_genes_associated_with_Survival
 LUAD_genes_associated_with_Survival
 
 ##################################
-Gender로 kaplan meier graph 그리기
+CXCL17로 kaplan meier graph 그리기
 ##################################
 
 install.packages("survival", repos="http://cran.r-project.org" )
 require(survival)
 
-f_CXCL17 <- factor(CXCL17 > median(CXCL17),
+surv_plot <- function(X){
+  data <- subset(data, Stage != "Stage IV")
+  f_gene <- factor(data[, colnames(data) == X] > median(data[, colnames(data) == X]),
                    levels = c('FALSE', 'TRUE'),
                    labels = c('Low', 'High'))
-LUAD_clinical$CXCL17 <- f_CXCL17
-fit <- survfit(Surv(Time/30.4, Status=="Dead") ~ CXCL17, 
-               data=subset(LUAD_clinical, Stage != "Stage IV")) 
+  
+  
+  fit <- survfit(Surv(Time/30.4, Status=="Dead") ~f_gene, 
+                 data=data) 
+  plot(fit, lty=2:3, xlab=X, ylab="Survival") 
+  legend("topright", legend=c('Low', 'High'), lty = c(2,3))
+  
+}
+
+########## survival function #######################
+surv_plot('ITGA2')
+
+fit <- survfit(Surv(Time/30.4, Status=="Dead") ~ f_gene, 
+               data=subset(data, Stage != "Stage IV")) 
 plot(fit, lty=2:3, xlab="CXCL17", ylab="Survival") 
 legend("topright", legend=c('Low', 'High'), lty = c(2,3))
+
+#########clincal + expression #################
+data <- data.frame(LUAD_clinical, t(LUAD_rnaseq))
+
+
+################# survival significance by gene expression median #########################
+gene_survival <- function(X){
+  data <- subset(data, Stage != "Stage IV")
+  f_gene <- factor(data[, colnames(data) == X] > median(data[, colnames(data) == X]),
+                   levels = c('FALSE', 'TRUE'),
+                   labels = c('Low', 'High'))
+  a <- survdiff(Surv(Time,Status=="Dead")~f_gene, data=data)
+  a
+}
+
+gene_survival('ITGA2')
 
 #############
 #Log-rank test 
 #############
-survdiff(Surv(Time,Status=="Dead")~f_CXCL17, data=LUAD_clinical)
+survdiff(Surv(Time,Status=="Dead")~f_ELK3, data=LUAD_clinical)
 
 ######################
 # Correlation analysis. #
